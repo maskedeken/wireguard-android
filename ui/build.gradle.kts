@@ -2,8 +2,10 @@
 
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
+import java.util.Properties
 
 val pkg: String = providers.gradleProperty("wireguardPackageName").get()
+val ver: String = providers.gradleProperty("wireguardVersionName").get()
 
 plugins {
     alias(libs.plugins.android.application)
@@ -24,8 +26,9 @@ android {
         minSdk = 21
         targetSdk = 34
         versionCode = providers.gradleProperty("wireguardVersionCode").get().toInt()
-        versionName = providers.gradleProperty("wireguardVersionName").get()
+        versionName = ver
         buildConfigField("int", "MIN_SDK_VERSION", minSdk.toString())
+        setProperty("archivesBaseName", "wireguard-" + ver)
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -62,6 +65,14 @@ android {
         warning += "MissingTranslation"
         warning += "ImpliedQuantity"
     }
+    splits {
+        abi {
+            reset()
+            isEnable = true
+            isUniversalApk = false
+            include("x86", "x86_64", "armeabi-v7a", "arm64-v8a")
+        }
+    }
 }
 
 dependencies {
@@ -90,4 +101,34 @@ tasks.withType<JavaCompile>().configureEach {
 
 tasks.withType<KotlinCompile>().configureEach {
     compilerOptions.jvmTarget.set(JvmTarget.JVM_17)
+}
+
+android.apply {
+    var keystorePwd: String? = null
+    var alias: String? = null
+    var pwd: String? = null
+    val propsFile = rootProject.file("local.properties")
+    if (propsFile.exists()) {
+        val props = Properties()
+        props.load(propsFile.inputStream())
+        keystorePwd = props.getProperty("KEYSTORE_PASS")
+        alias = props.getProperty("ALIAS_NAME")
+        pwd = props.getProperty("ALIAS_PASS")
+    }
+
+    if (keystorePwd != null && alias != null && pwd != null) {
+        signingConfigs {
+            create("release") {
+                storeFile = rootProject.file("release.keystore")
+                storePassword = keystorePwd
+                keyAlias = alias
+                keyPassword = pwd
+            }
+        }
+
+        buildTypes {
+            val key = signingConfigs.findByName("release")
+            getByName("release").signingConfig = key
+        }
+    }
 }
