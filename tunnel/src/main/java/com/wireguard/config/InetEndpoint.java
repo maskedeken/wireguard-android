@@ -7,7 +7,7 @@ package com.wireguard.config;
 
 import com.wireguard.util.NonNullForAll;
 
-import java.net.Inet4Address;
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -94,11 +94,11 @@ public final class InetEndpoint {
             //TODO(zx2c4): Implement a real timeout mechanism using DNS TTL
             if (Duration.between(lastResolution, Instant.now()).toMinutes() > 1) {
                 try {
-                    // Prefer v4 endpoints over v6 to work around DNS64 and IPv6 NAT issues.
+                    // Prefer v6 endpoints over v4 when there is v6 connectivity.
                     final InetAddress[] candidates = InetAddress.getAllByName(host);
                     InetAddress address = candidates[0];
                     for (final InetAddress candidate : candidates) {
-                        if (candidate instanceof Inet4Address) {
+                        if (candidate instanceof Inet6Address) {
                             address = candidate;
                             break;
                         }
