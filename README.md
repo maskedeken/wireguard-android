@@ -7,7 +7,7 @@ This is an Android GUI for [WireGuard](https://www.wireguard.com/). It [opportun
 ## Building
 
 ```
-$ git clone --recurse-submodules https://git.zx2c4.com/wireguard-android
+$ git clone --recurse-submodules https://github.com/zaneschepke/wireguard-android.git
 $ cd wireguard-android
 $ ./gradlew assembleRelease
 ```
@@ -33,6 +33,35 @@ compileOptions {
 dependencies {
     coreLibraryDesugaring "com.android.tools:desugar_jdk_libs:2.0.3"
 }
+```
+
+## Publishing
+
+1. Update tunnel's build.gradle.kts to the publishing repository with credentials.
+2. Install gpg
+```
+brew install gpg
+git config --global gpg.program $(which gpg)
+```
+3. Create gpg key
+```
+gpg --full-generate-key2
+```
+4. Add key information to ~/.gradle/gradle.properties
+```
+signing.gnupg.keyName=name
+signing.gnupg.passphrase=********
+signing.gnupg.executable=gpg
+signing.secretKeyRingFile=/path/to/.gnupg/secring.gpg
+```
+5. Add username and token for repository to local.properties
+```
+GITHUB_USER=zaneschepke
+GITHUB_TOKEN=***
+```
+6. Run publish
+```
+./gradlew publish
 ```
 
 ## Translating

@@ -1,5 +1,6 @@
 @file:Suppress("UnstableApiUsage")
 
+import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 val pkg: String = providers.gradleProperty("wireguardPackageName").get()
@@ -74,8 +75,8 @@ dependencies {
 publishing {
     publications {
         register<MavenPublication>("release") {
-            groupId = pkg
-            artifactId = "tunnel"
+            groupId = "com.zaneschepke"
+            artifactId = "wireguard-android"
             version = providers.gradleProperty("wireguardVersionName").get()
             afterEvaluate {
                 from(components["release"])
@@ -93,18 +94,18 @@ publishing {
                     }
                 }
                 scm {
-                    connection.set("scm:git:https://git.zx2c4.com/wireguard-android")
-                    developerConnection.set("scm:git:https://git.zx2c4.com/wireguard-android")
-                    url.set("https://git.zx2c4.com/wireguard-android")
+                    connection.set("scm:git:https://github.com/zaneschepke/wireguard-android")
+                    developerConnection.set("scm:git:https://github.com/zaneschepke/wireguard-android")
+                    url.set("https://github.com/zaneschepke/wireguard-android")
                 }
                 developers {
                     organization {
-                        name.set("WireGuard")
-                        url.set("https://www.wireguard.com/")
+                        name.set("Zane Schepke")
+                        url.set("https://zaneschepke.com")
                     }
                     developer {
-                        name.set("WireGuard")
-                        email.set("team@wireguard.com")
+                        name.set("Zane Schepke")
+                        email.set("support@zaneschepke.com")
                     }
                 }
             }
@@ -112,11 +113,11 @@ publishing {
     }
     repositories {
         maven {
-            name = "sonatype"
-            url = uri("https://oss.sonatype.org/service/local/staging/deploy/maven2/")
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/zaneschepke/wireguard-android")
             credentials {
-                username = providers.environmentVariable("SONATYPE_USER").orNull
-                password = providers.environmentVariable("SONATYPE_PASSWORD").orNull
+                username = getLocalProperty("GITHUB_USER")
+                password = getLocalProperty("GITHUB_TOKEN")
             }
         }
     }
