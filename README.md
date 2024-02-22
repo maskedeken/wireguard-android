@@ -59,7 +59,11 @@ signing.secretKeyRingFile=/path/to/.gnupg/secring.gpg
 GITHUB_USER=zaneschepke
 GITHUB_TOKEN=***
 ```
-6. Run publish
+6. Send key to public key server
+```
+gpg --send-key <keyId>
+```
+7. Run publish
 ```
 ./gradlew publish
 ```

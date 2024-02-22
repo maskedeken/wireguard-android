@@ -1,6 +1,5 @@
 @file:Suppress("UnstableApiUsage")
 
-import com.android.build.gradle.internal.cxx.configure.gradleLocalProperties
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 
 val pkg: String = providers.gradleProperty("wireguardPackageName").get()
@@ -118,6 +117,14 @@ publishing {
             credentials {
                 username = getLocalProperty("GITHUB_USER")
                 password = getLocalProperty("GITHUB_TOKEN")
+            }
+        }
+        maven {
+            name = "sonatype"
+            url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
+            credentials {
+                username = getLocalProperty("MAVEN_CENTRAL_USER")
+                password = getLocalProperty("MAVEN_CENTRAL_PASS")
             }
         }
     }

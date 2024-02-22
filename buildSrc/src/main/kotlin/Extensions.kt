@@ -1,7 +1,6 @@
-import org.gradle.api.Project
 import java.io.File
 
-fun Project.getLocalProperty(key: String, file: String = "local.properties"): String {
+fun getLocalProperty(key: String, file: String = "local.properties"): String {
     val properties = java.util.Properties()
     val localProperties = File(file)
     if (localProperties.isFile) {
