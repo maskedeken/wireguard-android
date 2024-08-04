@@ -77,9 +77,6 @@ publishing {
             groupId = "com.zaneschepke"
             artifactId = "wireguard-android"
             version = providers.gradleProperty("wireguardVersionName").get()
-            afterEvaluate {
-                from(components["release"])
-            }
             pom {
                 name.set("WireGuard Tunnel Library")
                 description.set("Embeddable tunnel library for WireGuard for Android")
