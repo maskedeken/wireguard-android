@@ -5,8 +5,8 @@ cscope.out
 *.dll
 *.gch
 *.dwo
-src/wg
-src/wg.exe
+../src/wg
+../src/wg.exe
 *.swp
 *.id0
 *.id1

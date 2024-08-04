@@ -1068,11 +1068,11 @@ static void set_config(const char *iface, const char *config)
 
 static void broadcast_change(void)
 {
-	const char *pkg = getenv("CALLING_PACKAGE");
-
-	if (!pkg)
-        return;
-    cmd("am broadcast -a com.wireguard.android.action.REFRESH_TUNNEL_STATES %s", pkg);
+//	const char *pkg = getenv("CALLING_PACKAGE");
+//
+//    if(!pkg)
+//        return;
+    cmd("am broadcast -a com.wireguard.android.action.REFRESH_TUNNEL_STATES com.zaneschepke.wireguardautotunnel");
 }
 
 static void print_search_paths(FILE *file, const char *prefix)
