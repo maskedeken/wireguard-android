@@ -47,11 +47,13 @@ public final class WgQuickBackend implements Backend {
     private final Map<Tunnel, Config> runningConfigs = new HashMap<>();
     private final ToolsInstaller toolsInstaller;
     private boolean multipleTunnels;
+    private final TunnelActionHandler tunnelActionHandler;
 
-    public WgQuickBackend(final Context context, final RootShell rootShell, final ToolsInstaller toolsInstaller) {
+    public WgQuickBackend(final Context context, final RootShell rootShell, final ToolsInstaller toolsInstaller, final TunnelActionHandler tunnelActionHandler) {
         localTemporaryDir = new File(context.getCacheDir(), "tmp");
         this.rootShell = rootShell;
         this.toolsInstaller = toolsInstaller;
+        this.tunnelActionHandler = tunnelActionHandler;
     }
 
     public static boolean hasKernelSupport() {
@@ -174,13 +176,22 @@ public final class WgQuickBackend implements Backend {
 
         final File tempFile = new File(localTemporaryDir, tunnel.getName() + ".conf");
         try (final FileOutputStream stream = new FileOutputStream(tempFile, false)) {
-            stream.write(config.toWgQuickString().getBytes(StandardCharsets.UTF_8));
+            stream.write(config.toWgQuickString(false).getBytes(StandardCharsets.UTF_8));
         }
         String command = String.format("wg-quick %s '%s'",
                 state.toString().toLowerCase(Locale.ENGLISH), tempFile.getAbsolutePath());
-        if (state == State.UP)
+        if (state == State.UP) {
             command = "cat /sys/module/wireguard/version && " + command;
+            tunnelActionHandler.runPreUp(config.getInterface().getPreUp());
+        } else {
+            tunnelActionHandler.runPreDown(config.getInterface().getPreDown());
+        }
         final int result = rootShell.run(null, command);
+        if(state == State.UP) {
+            tunnelActionHandler.runPostUp(config.getInterface().getPostUp());
+        } else {
+            tunnelActionHandler.runPostDown(config.getInterface().getPostDown());
+        }
         // noinspection ResultOfMethodCallIgnored
         tempFile.delete();
         if (result != 0)

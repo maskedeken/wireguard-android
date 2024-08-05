@@ -47,6 +47,7 @@ public final class GoBackend implements Backend {
     @Nullable private static AlwaysOnCallback alwaysOnCallback;
     private static GhettoCompletableFuture<VpnService> vpnService = new GhettoCompletableFuture<>();
     private final Context context;
+    private final TunnelActionHandler tunnelActionHandler;
     @Nullable private Config currentConfig;
     @Nullable private Tunnel currentTunnel;
     private int currentTunnelHandle = -1;
@@ -56,9 +57,10 @@ public final class GoBackend implements Backend {
      *
      * @param context An Android {@link Context}
      */
-    public GoBackend(final Context context) {
+    public GoBackend(final Context context, final TunnelActionHandler tunnelActionHandler) {
         SharedLibraryLoader.loadSharedLibrary(context, "wg-go");
         this.context = context;
+        this.tunnelActionHandler = tunnelActionHandler;
     }
 
     /**
@@ -323,7 +325,9 @@ public final class GoBackend implements Backend {
                 if (tun == null)
                     throw new BackendException(Reason.TUN_CREATION_ERROR);
                 Log.d(TAG, "Go backend " + wgVersion());
+                tunnelActionHandler.runPreUp(config.getInterface().getPreUp());
                 currentTunnelHandle = wgTurnOn(tunnel.getName(), tun.detachFd(), goConfig);
+                tunnelActionHandler.runPostUp(config.getInterface().getPostUp());
             }
             if (currentTunnelHandle < 0)
                 throw new BackendException(Reason.GO_ACTIVATION_ERROR_CODE, currentTunnelHandle);
@@ -339,10 +343,12 @@ public final class GoBackend implements Backend {
                 return;
             }
             int handleToClose = currentTunnelHandle;
+            tunnelActionHandler.runPreDown(currentConfig.getInterface().getPreDown());
+            wgTurnOff(handleToClose);
+            tunnelActionHandler.runPostDown(currentConfig.getInterface().getPostDown());
             currentTunnel = null;
             currentTunnelHandle = -1;
             currentConfig = null;
-            wgTurnOff(handleToClose);
             try {
                 vpnService.get(0, TimeUnit.NANOSECONDS).stopSelf();
             } catch (final TimeoutException ignored) { }

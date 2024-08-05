@@ -19,6 +19,9 @@ import androidx.datastore.preferences.preferencesDataStoreFile
 import com.google.android.material.color.DynamicColors
 import com.wireguard.android.backend.Backend
 import com.wireguard.android.backend.GoBackend
+import com.wireguard.android.backend.NoopTunnelActionHandler
+import com.wireguard.android.backend.RootTunnelActionHandler
+import com.wireguard.android.backend.TunnelActionHandler
 import com.wireguard.android.backend.WgQuickBackend
 import com.wireguard.android.configStore.FileConfigStore
 import com.wireguard.android.model.TunnelManager
@@ -63,20 +66,23 @@ class Application : android.app.Application() {
 
     private suspend fun determineBackend(): Backend {
         var backend: Backend? = null
+        var tunnelActionHandler : TunnelActionHandler = NoopTunnelActionHandler()
         if (UserKnobs.enableKernelModule.first() && WgQuickBackend.hasKernelSupport()) {
             try {
                 rootShell.start()
-                val wgQuickBackend = WgQuickBackend(applicationContext, rootShell, toolsInstaller)
+                tunnelActionHandler = RootTunnelActionHandler(rootShell)
+                val wgQuickBackend = WgQuickBackend(applicationContext, rootShell, toolsInstaller, tunnelActionHandler)
                 wgQuickBackend.setMultipleTunnels(UserKnobs.multipleTunnels.first())
                 backend = wgQuickBackend
                 UserKnobs.multipleTunnels.onEach {
                     wgQuickBackend.setMultipleTunnels(it)
                 }.launchIn(coroutineScope)
             } catch (ignored: Exception) {
+                tunnelActionHandler = NoopTunnelActionHandler()
             }
         }
         if (backend == null) {
-            backend = GoBackend(applicationContext)
+            backend = GoBackend(applicationContext,tunnelActionHandler)
             GoBackend.setAlwaysOnCallback { get().applicationScope.launch { get().tunnelManager.restoreState(true) } }
         }
         return backend
