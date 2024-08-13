@@ -14,6 +14,7 @@ import com.wireguard.crypto.KeyPair;
 import com.wireguard.util.NonNullForAll;
 
 import java.net.InetAddress;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.LinkedHashSet;
@@ -46,6 +47,10 @@ public final class Interface {
     private final KeyPair keyPair;
     private final Optional<Integer> listenPort;
     private final Optional<Integer> mtu;
+    private final List<String> preUp;
+    private final List<String> postUp;
+    private final List<String> preDown;
+    private final List<String> postDown;
 
     private Interface(final Builder builder) {
         // Defensively copy to ensure immutability even if the Builder is reused.
@@ -57,6 +62,10 @@ public final class Interface {
         keyPair = Objects.requireNonNull(builder.keyPair, "Interfaces must have a private key");
         listenPort = builder.listenPort;
         mtu = builder.mtu;
+        preUp = Collections.unmodifiableList(new ArrayList<>(builder.preUp));
+        postUp = Collections.unmodifiableList(new ArrayList<>(builder.postUp));
+        preDown = Collections.unmodifiableList(new ArrayList<>(builder.preDown));
+        postDown = Collections.unmodifiableList(new ArrayList<>(builder.postDown));
     }
 
     /**
@@ -95,6 +104,18 @@ public final class Interface {
                 case "privatekey":
                     builder.parsePrivateKey(attribute.getValue());
                     break;
+                case "preup":
+                    builder.parsePreUp(attribute.getValue());
+                    break;
+                case "postup":
+                    builder.parsePostUp(attribute.getValue());
+                    break;
+                case "predown":
+                    builder.parsePreDown(attribute.getValue());
+                    break;
+                case "postdown":
+                    builder.parsePostDown(attribute.getValue());
+                    break;
                 default:
                     throw new BadConfigException(Section.INTERFACE, Location.TOP_LEVEL,
                             Reason.UNKNOWN_ATTRIBUTE, attribute.getKey());
@@ -115,7 +136,11 @@ public final class Interface {
                 && includedApplications.equals(other.includedApplications)
                 && keyPair.equals(other.keyPair)
                 && listenPort.equals(other.listenPort)
-                && mtu.equals(other.mtu);
+                && mtu.equals(other.mtu)
+                && preUp.equals(other.preUp)
+                && postUp.equals(other.postUp)
+                && preDown.equals(other.preDown)
+                && postDown.equals(other.postDown);
     }
 
     /**
@@ -195,6 +220,22 @@ public final class Interface {
         return mtu;
     }
 
+    public List<String> getPreUp() {
+        return preUp;
+    }
+
+    public List<String> getPostUp() {
+        return postUp;
+    }
+
+    public List<String> getPreDown() {
+        return preDown;
+    }
+
+    public List<String> getPostDown() {
+        return postDown;
+    }
+
     @Override
     public int hashCode() {
         int hash = 1;
@@ -205,6 +246,10 @@ public final class Interface {
         hash = 31 * hash + keyPair.hashCode();
         hash = 31 * hash + listenPort.hashCode();
         hash = 31 * hash + mtu.hashCode();
+        hash = 31 * hash + preUp.hashCode();
+        hash = 31 * hash + postUp.hashCode();
+        hash = 31 * hash + preDown.hashCode();
+        hash = 31 * hash + postDown.hashCode();
         return hash;
     }
 
@@ -229,7 +274,7 @@ public final class Interface {
      *
      * @return The {@code Interface} represented as a series of "Key = Value" lines
      */
-    public String toWgQuickString() {
+    public String toWgQuickString(final Boolean includeScripts) {
         final StringBuilder sb = new StringBuilder();
         if (!addresses.isEmpty())
             sb.append("Address = ").append(Attribute.join(addresses)).append('\n');
@@ -245,6 +290,16 @@ public final class Interface {
         listenPort.ifPresent(lp -> sb.append("ListenPort = ").append(lp).append('\n'));
         mtu.ifPresent(m -> sb.append("MTU = ").append(m).append('\n'));
         sb.append("PrivateKey = ").append(keyPair.getPrivateKey().toBase64()).append('\n');
+        if(includeScripts) {
+            for (final String script : preUp)
+                sb.append("PreUp = ").append(script).append('\n');
+            for (final String script : postUp)
+                sb.append("PostUp = ").append(script).append('\n');
+            for (final String script : preDown)
+                sb.append("PreDown = ").append(script).append('\n');
+            for (final String script : postDown)
+                sb.append("PostDown = ").append(script).append('\n');
+        }
         return sb.toString();
     }
 
@@ -279,6 +334,14 @@ public final class Interface {
         private Optional<Integer> listenPort = Optional.empty();
         // Defaults to not present.
         private Optional<Integer> mtu = Optional.empty();
+        // Defaults to empty list
+        private List<String> preUp = new ArrayList<>();
+        // Defaults to empty list
+        private List<String> postUp = new ArrayList<>();
+        // Defaults to empty list
+        private List<String> preDown = new ArrayList<>();
+        // Defaults to empty list
+        private List<String> postDown = new ArrayList<>();
 
         public Builder addAddress(final InetNetwork address) {
             addresses.add(address);
@@ -419,5 +482,25 @@ public final class Interface {
             this.mtu = mtu == 0 ? Optional.empty() : Optional.of(mtu);
             return this;
         }
+        public Builder parsePreUp(final String script) {
+            preUp.add(script);
+            return this;
+        }
+
+        public Builder parsePostUp(final String script) {
+            postUp.add(script);
+            return this;
+        }
+
+        public Builder parsePreDown(final String script) {
+            preDown.add(script);
+            return this;
+        }
+
+        public Builder parsePostDown(final String script) {
+            postDown.add(script);
+            return this;
+        }
+
     }
 }

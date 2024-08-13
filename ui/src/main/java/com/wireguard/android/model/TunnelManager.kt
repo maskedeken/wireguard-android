@@ -122,6 +122,7 @@ class TunnelManager(private val configStore: ConfigStore) : BaseObservable() {
     }
 
     private fun refreshTunnelStates() {
+        Log.i(TAG, "REFRESHING TUNNEL STATES")
         applicationScope.launch {
             try {
                 val running = withContext(Dispatchers.IO) { getBackend().runningTunnelNames }
@@ -213,11 +214,13 @@ class TunnelManager(private val configStore: ConfigStore) : BaseObservable() {
 
     class IntentReceiver : BroadcastReceiver() {
         override fun onReceive(context: Context, intent: Intent?) {
+            Log.i(TAG, "NEW BROADCAST")
             applicationScope.launch {
                 val manager = getTunnelManager()
                 if (intent == null) return@launch
                 val action = intent.action ?: return@launch
                 if ("com.wireguard.android.action.REFRESH_TUNNEL_STATES" == action) {
+                    Log.i(TAG, "Received new broadcast to update tunnel states")
                     manager.refreshTunnelStates()
                     return@launch
                 }

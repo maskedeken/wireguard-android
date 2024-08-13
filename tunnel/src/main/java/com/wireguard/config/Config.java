@@ -160,9 +160,9 @@ public final class Config {
      *
      * @return the {@code Config} represented as one [Interface] and zero or more [Peer] sections
      */
-    public String toWgQuickString() {
+    public String toWgQuickString(final Boolean includeScripts) {
         final StringBuilder sb = new StringBuilder();
-        sb.append("[Interface]\n").append(interfaze.toWgQuickString());
+        sb.append("[Interface]\n").append(interfaze.toWgQuickString(includeScripts));
         for (final Peer peer : peers)
             sb.append("\n[Peer]\n").append(peer.toWgQuickString());
         return sb.toString();
