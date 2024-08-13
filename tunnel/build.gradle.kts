@@ -115,16 +115,16 @@ publishing {
             name = "GitHubPackages"
             url = uri("https://maven.pkg.github.com/zaneschepke/wireguard-android")
             credentials {
-                username = getLocalProperty("GITHUB_USER")
-                password = getLocalProperty("GITHUB_TOKEN")
+                username = providers.environmentVariable("GITHUB_USER").orNull
+                password = providers.environmentVariable("GITHUB_TOKEN").orNull
             }
         }
         maven {
             name = "sonatype"
             url = uri("https://s01.oss.sonatype.org/service/local/staging/deploy/maven2/")
             credentials {
-                username = getLocalProperty("MAVEN_CENTRAL_USER")
-                password = getLocalProperty("MAVEN_CENTRAL_PASS")
+                username = providers.environmentVariable("MAVEN_CENTRAL_USER").orNull
+                password = providers.environmentVariable("MAVEN_CENTRAL_PASS").orNull
             }
         }
     }
